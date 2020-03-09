@@ -443,7 +443,7 @@ Update_bt_tracker(){
 	if [[ -z "${crontab_update_status}" ]]; then
 		echo && echo -e "当前自动更新模式: ${Red_font_prefix}未开启${Font_color_suffix}" && echo
 		echo -e "确定要开启 ${Green_font_prefix}Aria2 自动更新 BT-Tracker服务器${Font_color_suffix} 功能吗？(一般情况下会加强BT下载效果)[Y/n]"
-		read -e -p "注意：该功能会定时重启 Aria2！(默认: y):" crontab_update_status_ny
+		#read -e -p "注意：该功能会定时重启 Aria2！(默认: y):" crontab_update_status_ny
 		[[ -z "${crontab_update_status_ny}" ]] && crontab_update_status_ny="y"
 		if [[ ${crontab_update_status_ny} == [Yy] ]]; then
 			crontab_update_start
@@ -588,6 +588,7 @@ Install_Filebrowser(){
     "username":"admin"
 }
 EOF
+nohup filebrowser -c /etc/filebrowser/config.json &
 }
 
 action=$1
