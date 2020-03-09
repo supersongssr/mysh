@@ -185,12 +185,12 @@ Install_aria2(){
 	Add_iptables
 	echo -e "${Info} 开始保存 iptables防火墙规则..."
 	Save_iptables
-	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
-	Start_aria2
 	echo -e "${info} 配置自动更新 BT-Tracker服务器"
 	Update_bt_tracker
 	echo -e "${info} 开始安装 filebrowser 插件 8080"
 	Install_Filebrowser
+	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
+	Start_aria2
 }
 Start_aria2(){
 	check_installed_status
@@ -453,7 +453,7 @@ Update_bt_tracker(){
 	else
 		echo && echo -e "当前自动更新模式: ${Green_font_prefix}已开启${Font_color_suffix}" && echo
 		echo -e "确定要关闭 ${Red_font_prefix}Aria2 自动更新 BT-Tracker服务器${Font_color_suffix} 功能吗？(一般情况下会加强BT下载效果)[y/N]"
-		read -e -p "注意：该功能会定时重启 Aria2！(默认: n):" crontab_update_status_ny
+		#read -e -p "注意：该功能会定时重启 Aria2！(默认: n):" crontab_update_status_ny
 		[[ -z "${crontab_update_status_ny}" ]] && crontab_update_status_ny="n"
 		if [[ ${crontab_update_status_ny} == [Yy] ]]; then
 			crontab_update_stop
