@@ -622,7 +622,7 @@ systemctl disable Firewalld
 
 }
 Install_Dflimit(){
-	cat >> /etc/filebrowser/dfLimit.sh << EOF
+	cat > /etc/filebrowser/dfLimit.sh << EOF
 #!/bin/bash
 used=\$(df -h | grep '/dev/vda' | awk {'print \$5'})
 cd /usr/local/caddy/www/aria2/Download
@@ -634,7 +634,7 @@ while [[ \${used%?} -gt \${max%?} ]]; do
 done
 EOF
 
-echo '* * * * * /bin/bash /etc/filebrowser/dfLimit.sh' >> /etc/crontab
+echo '* * * * * root /bin/bash /etc/filebrowser/dfLimit.sh' >> /etc/crontab
 }
 
 action=$1
