@@ -146,6 +146,7 @@ Service_aria2(){
 		chmod +x /etc/init.d/aria2
 		chkconfig --add aria2
 		chkconfig aria2 on
+		systemctl restart aria2
 	else
 		if ! wget --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/service/aria2_debian -O /etc/init.d/aria2; then
 			echo -e "${Error} Aria2服务 管理脚本下载失败 !" && exit 1
@@ -194,8 +195,8 @@ Install_aria2(){
 	Install_Dflimit
 	echo -e "${Info} 安装完毕，显示配置信息"
 	View_Aria2
-	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
-	Start_aria2
+	echo -e "${Info} 所有步骤 安装完毕，重启aria2..."
+	Restart_aria2
 }
 Start_aria2(){
 	check_installed_status
@@ -209,6 +210,7 @@ Stop_aria2(){
 	check_pid
 	[[ -z ${PID} ]] && echo -e "${Error} Aria2 没有运行，请检查 !" && exit 1
 	/etc/init.d/aria2 stop
+	systemctl stop aria2
 }
 Restart_aria2(){
 	check_installed_status
