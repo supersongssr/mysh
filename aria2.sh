@@ -192,6 +192,8 @@ Install_aria2(){
 	Install_Filebrowser
 	echo -e "${info} 开始安装 空间限制dfLimit"
 	Install_Dflimit
+	echo -e "${Info} 安装完毕，显示配置信息"
+	View_Aria2
 	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
 	Start_aria2
 }
