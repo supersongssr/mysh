@@ -115,7 +115,7 @@ Download_aria2(){
 	fi
 	wget -N --no-check-certificate "https://github.com/q3aql/aria2-static-builds/releases/download/v${aria2_new_ver}/aria2-${aria2_new_ver}-linux-gnu-${bit}-build1.tar.bz2"
 	Aria2_Name="aria2-${aria2_new_ver}-linux-gnu-${bit}-build1"
-	
+
 	[[ ! -s "${Aria2_Name}.tar.bz2" ]] && echo -e "${Error} Aria2 压缩包下载失败 !" && exit 1
 	tar jxvf "${Aria2_Name}.tar.bz2"
 	[[ ! -e "/usr/local/${Aria2_Name}" ]] && echo -e "${Error} Aria2 解压失败 !" && rm -rf "${Aria2_Name}.tar.bz2" && exit 1
@@ -190,6 +190,8 @@ Install_aria2(){
 	Update_bt_tracker
 	echo -e "${info} 开始安装 filebrowser 插件 8080"
 	Install_Filebrowser
+	echo -e "${info} 开始安装 空间限制dfLimit"
+	Install_Dflimit
 	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
 	Start_aria2
 }
@@ -197,7 +199,8 @@ Start_aria2(){
 	check_installed_status
 	check_pid
 	[[ ! -z ${PID} ]] && echo -e "${Error} Aria2 正在运行，请检查 !" && exit 1
-	/etc/init.d/aria2 start
+	# /etc/init.d/aria2 start
+	systemctl start aria2
 }
 Stop_aria2(){
 	check_installed_status
@@ -209,7 +212,9 @@ Restart_aria2(){
 	check_installed_status
 	check_pid
 	[[ ! -z ${PID} ]] && /etc/init.d/aria2 stop
-	/etc/init.d/aria2 start
+	# /etc/init.d/aria2 start
+	systemctl restart aria2
+
 }
 Set_aria2(){
 	check_installed_status
@@ -257,7 +262,7 @@ Set_aria2_RPC_passwd(){
 				if [[ ${read_123} != "1" ]]; then
 					Restart_aria2
 				fi
-			else 
+			else
 				echo -e "${Error} 密码修改失败！旧密码为：${Green_font_prefix}${aria2_passwd}${Font_color_suffix}"
 			fi
 		else
@@ -267,7 +272,7 @@ Set_aria2_RPC_passwd(){
 				if [[ ${read_123} != "1" ]]; then
 					Restart_aria2
 				fi
-			else 
+			else
 				echo -e "${Error} 密码修改失败！旧密码为：${Green_font_prefix}${aria2_passwd}${Font_color_suffix}"
 			fi
 		fi
@@ -300,7 +305,7 @@ Set_aria2_RPC_port(){
 				if [[ ${read_123} != "1" ]]; then
 					Restart_aria2
 				fi
-			else 
+			else
 				echo -e "${Error} 端口修改失败！旧端口为：${Green_font_prefix}${aria2_port}${Font_color_suffix}"
 			fi
 		else
@@ -313,7 +318,7 @@ Set_aria2_RPC_port(){
 				if [[ ${read_123} != "1" ]]; then
 					Restart_aria2
 				fi
-			else 
+			else
 				echo -e "${Error} 端口修改失败！旧密码为：${Green_font_prefix}${aria2_port}${Font_color_suffix}"
 			fi
 		fi
@@ -344,7 +349,7 @@ Set_aria2_RPC_dir(){
 					if [[ ${read_123} != "1" ]]; then
 						Restart_aria2
 					fi
-				else 
+				else
 					echo -e "${Error} 位置修改失败！旧位置为：${Green_font_prefix}${aria2_dir}${Font_color_suffix}"
 				fi
 			else
@@ -356,7 +361,7 @@ Set_aria2_RPC_dir(){
 					if [[ ${read_123} != "1" ]]; then
 						Restart_aria2
 					fi
-				else 
+				else
 					echo -e "${Error} 位置修改失败！旧位置为：${Green_font_prefix}${aria2_dir}${Font_color_suffix}"
 				fi
 			fi
@@ -407,7 +412,7 @@ Read_config(){
 		aria2_port=$(echo -e "${conf_text}"|grep "rpc-listen-port="|awk -F "=" '{print $NF}')
 		aria2_passwd=$(echo -e "${conf_text}"|grep "rpc-secret="|awk -F "=" '{print $NF}')
 	fi
-	
+
 }
 View_Aria2(){
 	check_installed_status
@@ -430,7 +435,8 @@ View_Aria2(){
  地址\t: ${Green_font_prefix}${ip}${Font_color_suffix}
  端口\t: ${Green_font_prefix}${aria2_port}${Font_color_suffix}
  密码\t: ${Green_font_prefix}${aria2_passwd}${Font_color_suffix}
- 目录\t: ${Green_font_prefix}${aria2_dir}${Font_color_suffix}\n"
+ 目录\t: ${Green_font_prefix}${aria2_dir}${Font_color_suffix}
+ 网盘\t: http://${Green_font_prefix}${ip}${Font_color_suffix}:8080 账号请自行注册\n"
 }
 View_Log(){
 	[[ ! -e ${aria2_log} ]] && echo -e "${Error} Aria2 日志文件不存在 !" && exit 1
@@ -585,11 +591,48 @@ Install_Filebrowser(){
     "database":"/etc/filebrowser/filebrowser.db",
     "log":"/var/log/filebrowser.log",
     "port":8080,
-    "root":"/usr/local/caddy/www/aria2/Download",
-    "username":"admin"
+    "root":"/usr/local/caddy/www/aria2/Download"
 }
 EOF
-nohup filebrowser -c /etc/filebrowser/config.json &
+
+cd /etc/filebrowser
+/usr/local/bin/filebrowser config init --root=/usr/local/caddy/www/aria2/Download --port=8080 --log=/var/log/filebrowser.log --address=0.0.0.0 --signup=true --locale=zh-cn --perm.delete=false --perm.execute=false
+
+	cat >> /etc/systemd/system/filebrowser.service << EOF
+[Unit]
+Description=File Browser
+After=network.target
+[Service]
+ExecStart=/usr/local/bin/filebrowser -d /etc/filebrowser/filebrowser.db
+Restart=always
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable filebrowser
+systemctl start filebrowser
+
+# nohup filebrowser -c /etc/filebrowser/config.json &
+# echo "1 1 * * * root filebrowser -c /etc/filebrowser/config.json" >> /etc/crontab
+
+systemctl stop Firewalld
+systemctl disable Firewalld
+
+}
+Install_Dflimit(){
+	cat >> /etc/filebrowser/dfLimit.sh << EOF
+#!/bin/bash
+used=\$(df -h | grep '/dev/vda' | awk {'print \$5'})
+cd /usr/local/caddy/www/aria2/Download
+max=90%
+while [[ \${used%?} -gt \${max%?} ]]; do
+  file=\`ls -tr | head -n1\`
+  rm -rf "\$file"  #这么做是为了防止文件名出现空格
+  used=\$(df -h | grep '/dev/vda' | awk {'print \$5'})
+done
+EOF
+
+echo '* * * * * /bin/bash /etc/filebrowser/dfLimit.sh' >> /etc/crontab
 }
 
 action=$1
@@ -598,7 +641,7 @@ if [[ "${action}" == "update-bt-tracker" ]]; then
 else
 echo && echo -e " Aria2 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
   -- Toyo | doub.io/shell-jc4 --
-  
+
  ${Green_font_prefix} 0.${Font_color_suffix} 升级脚本
 ————————————
  ${Green_font_prefix} 1.${Font_color_suffix} 安装 Aria2
