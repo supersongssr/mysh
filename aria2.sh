@@ -140,13 +140,24 @@ Download_aria2_conf(){
 }
 Service_aria2(){
 	if [[ ${release} = "centos" ]]; then
-		if ! wget --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/service/aria2_centos -O /etc/init.d/aria2; then
-			echo -e "${Error} Aria2服务 管理脚本下载失败 !" && exit 1
-		fi
-		chmod +x /etc/init.d/aria2
-		chkconfig --add aria2
-		chkconfig aria2 on
-		systemctl restart aria2
+		# if ! wget --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/service/aria2_centos -O /etc/init.d/aria2; then
+		# 	echo -e "${Error} Aria2服务 管理脚本下载失败 !" && exit 1
+		# fi
+		cat > /etc/systemd/system/aria2.service << EOF
+[Unit]
+Description=aria2
+After=network.target
+[Service]
+ExecStart=/usr/bin/aria2c -c /root/.aria2/aria2.conf
+Restart=always
+[Install]
+WantedBy=multi-user.target
+EOF
+		#chmod +x /etc/init.d/aria2
+		#chkconfig --add aria2
+		#chkconfig aria2 on
+		systemctl enable aria2
+		systemctl start aria2
 	else
 		if ! wget --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/service/aria2_debian -O /etc/init.d/aria2; then
 			echo -e "${Error} Aria2服务 管理脚本下载失败 !" && exit 1
@@ -511,7 +522,8 @@ Update_bt_tracker_cron(){
 		sed -i "s@bt-tracker.*@bt-tracker=$bt_tracker_list@g" "${aria2_conf}"
 		echo -e "${Info} 更新成功..."
 	fi
-	/etc/init.d/aria2 start
+	#/etc/init.d/aria2 start
+	systemctl restart aria2
 }
 Update_aria2(){
 	check_installed_status
@@ -602,7 +614,7 @@ EOF
 cd /etc/filebrowser
 /usr/local/bin/filebrowser config init --root=/usr/local/caddy/www/aria2/Download --port=8080 --log=/var/log/filebrowser.log --address=0.0.0.0 --signup=true --locale=zh-cn --perm.delete=false --perm.execute=false
 
-	cat >> /etc/systemd/system/filebrowser.service << EOF
+	cat > /etc/systemd/system/filebrowser.service << EOF
 [Unit]
 Description=File Browser
 After=network.target
